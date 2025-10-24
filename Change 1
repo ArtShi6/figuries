@@ -1,0 +1,76 @@
+Григорий:
+package org.example.model;
+
+import java.awt.geom.RectangularShape;
+import java.awt.Color;
+
+public class MyShape {
+    private RectangularShape shape;
+    private Color color;
+    private Model.ShapeType type;
+
+    public MyShape(RectangularShape shape, Color color, Model.ShapeType type) {
+        this.shape = shape;
+        this.color = color;
+        this.type = type;
+    }
+
+    public RectangularShape getShape() {
+        return shape;
+    }
+
+    public Color getColor() {
+        return color;
+    }
+
+    public Model.ShapeType getType() {
+        return type;
+    }
+}
+
+package org.example.view;
+
+import org.example.controller.Controller;
+import javax.swing.*;
+import java.awt.*;
+
+public class MyFrame extends JFrame {
+    private MyPanel myPanel;
+    private Controller controller;
+
+    public MyFrame(MyPanel myPanel, Controller controller) {
+        this.myPanel = myPanel;
+        this.controller = controller;
+        setupUI();
+    }
+
+    private void setupUI() {
+        setLayout(new BorderLayout());
+        
+        // Панель с кнопками
+        JPanel buttonPanel = new JPanel();
+        JButton rectangleButton = new JButton("Прямоугольник");
+        JButton ellipseButton = new JButton("Эллипс");
+        JButton clearButton = new JButton("Очистить");
+
+        // Обработчики для кнопок
+        rectangleButton.addActionListener(e -> controller.setRectangleMode());
+        ellipseButton.addActionListener(e -> controller.setEllipseMode());
+        clearButton.addActionListener(e -> {
+            controller.getModel().getShapes().clear();
+            myPanel.repaint();
+        });
+
+        buttonPanel.add(rectangleButton);
+        buttonPanel.add(ellipseButton);
+        buttonPanel.add(clearButton);
+
+        add(buttonPanel, BorderLayout.NORTH);
+        add(myPanel, BorderLayout.CENTER);
+
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(600, 500);
+        setLocationRelativeTo(null);
+        setVisible(true);
+    }
+}
