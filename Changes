@@ -1,78 +1,188 @@
-package org.example.model;
 
-import java.awt.geom.RectangularShape;
-import java.awt.Color;
+Zimka:
+package org.example;
 
-public class MyShape {
-    private RectangularShape shape;
-    private Color color;
-    private Model.ShapeType type;
+import org.example.controller.Controller;
 
-    public MyShape(RectangularShape shape, Color color, Model.ShapeType type) {
-        this.shape = shape;
-        this.color = color;
-        this.type = type;
-    }
-
-    public RectangularShape getShape() {
-        return shape;
-    }
-
-    public Color getColor() {
-        return color;
-    }
-
-    public Model.ShapeType getType() {
-        return type;
+//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
+// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
+public class Main {
+    public static void main(String[] args) {
+        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
+        // to see how IntelliJ IDEA suggests fixing it.
+      new Controller();
     }
 }
 
+package org.example.model;
 
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.Collection;
 
+public class Model {
+    Collection<MyShape> list;
+    MyShape etalon;
+    MyShape currentShape;
+
+    public Model() {
+        list = new ArrayList<>();
+       etalon = new MyShape(new Rectangle2D.Double());
+    }
+
+    public void addShape() {
+        currentShape = (MyShape)etalon.clone();
+        list.add(currentShape);
+    }
+
+    public void setFrame(Point2D[] p) {
+        currentShape.setFrame(p);
+    }
+
+    public Collection<MyShape> getList() {
+        return list;
+    }
+}
+
+package org.example.model;
+
+import java.awt.*;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.RectangularShape;
+
+public class MyShape {
+    Color color;
+    RectangularShape shape;
+
+    public MyShape(RectangularShape s) {
+        color = Color.GREEN;
+        shape = s;
+    }
+
+    public void setFrame(Point2D[] p) {
+        shape.setFrameFromDiagonal(p[0],p[1]);
+    }
+    public Object clone(){
+        MyShape s = new MyShape((RectangularShape)shape.clone());
+        s.color = color;
+        return s;
+    }
+
+    public void draw(Graphics2D g2) {
+        Paint paint=g2.getPaint();
+        g2.setColor(color);
+        g2.fill(shape);
+
+    }
+}
+майшэйп
 
 package org.example.view;
 
 import org.example.controller.Controller;
+import org.example.model.MyShape;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
+import java.awt.event.MouseMotionListener;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.util.Collection;
+
+public class MyPanel extends JPanel {
+    Controller controller;
+    Point2D p1;
+    Point2D p2;
+
+    public MyPanel(Controller  controller){
+        this.controller = controller;
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+            controller.mousePressed( e.getPoint());
+
+            }
+        });
+        addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                controller.mouseDragget( e.getPoint());
+                repaint();
+            }
+
+
+        });
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2 = (Graphics2D) g;
+        Collection<MyShape> list = controller.translate();
+        for(MyShape s:list)
+            s.draw(g2);
+    }
+}
+панель
+
+package org.example.controller;
+
+import org.example.model.Model;
+import org.example.model.MyShape;
+import org.example.view.MyFrame;
+import org.example.view.MyPanel;
+
+import java.awt.*;
+import java.awt.geom.Point2D;
+import java.util.Collection;
+
+public class Controller {
+    MyPanel panel;
+    MyFrame myFrame;
+    MyShape myShape;
+    Model model;
+    Point2D[]p;
+
+    public Controller() {
+        panel = new MyPanel(this);
+        model = new Model();
+        myFrame = new MyFrame(panel);
+        p=new Point2D[2];
+    }
+
+    public void mousePressed(Point point) {
+        p[0]=point;
+        model.addShape();
+    }
+
+    public void mouseDragget(Point point) {
+        p[1]=point;
+        model.setFrame(p);
+    }
+    public Collection<MyShape> translate(){
+        return model.getList();
+    }
+}
+контролер
+
+package org.example.view;
+
 import javax.swing.*;
 import java.awt.*;
 
 public class MyFrame extends JFrame {
-    private MyPanel myPanel;
-    private Controller controller;
+    MyPanel myPanel; // usage
 
-    public MyFrame(MyPanel myPanel, Controller controller) {
+    public MyFrame(MyPanel myPanel) throws HeadlessException {
         this.myPanel = myPanel;
-        this.controller = controller;
-        setupUI();
-    }
-
-    private void setupUI() {
-        setLayout(new BorderLayout());
-        
-        // Панель с кнопками
-        JPanel buttonPanel = new JPanel();
-        JButton rectangleButton = new JButton("Прямоугольник");
-        JButton ellipseButton = new JButton("Эллипс");
-        JButton clearButton = new JButton("Очистить");
-
-        // Обработчики для кнопок
-        rectangleButton.addActionListener(e -> controller.setRectangleMode());
-        ellipseButton.addActionListener(e -> controller.setEllipseMode());
-        clearButton.addActionListener(e -> {
-            controller.getModel().getShapes().clear();
-            myPanel.repaint();
-        });
-
-        buttonPanel.add(rectangleButton);
-        buttonPanel.add(ellipseButton);
-        buttonPanel.add(clearButton);
-
-        add(buttonPanel, BorderLayout.NORTH);
-        add(myPanel, BorderLayout.CENTER);
-
+        add(myPanel);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(600, 500);
-        setLocationRelativeTo(null);
         setVisible(true);
+        setSize(500, 500);
     }
 }
